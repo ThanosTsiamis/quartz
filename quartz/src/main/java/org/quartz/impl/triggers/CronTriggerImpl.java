@@ -84,6 +84,7 @@ public class CronTriggerImpl extends AbstractTrigger<CronTrigger> implements Cro
     private Date nextFireTime = null;
     private Date previousFireTime = null;
     private transient TimeZone timeZone = null;
+    private long offsetMillis = 0L;
 
     /*
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,14 +117,30 @@ public class CronTriggerImpl extends AbstractTrigger<CronTrigger> implements Cro
      * 
      * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      */
-    
+
     @Override
     public Object clone() {
         CronTriggerImpl copy = (CronTriggerImpl) super.clone();
         if (cronEx != null) {
             copy.setCronExpression(new CronExpression(cronEx));
         }
+        copy.offsetMillis = this.offsetMillis;
         return copy;
+    }
+
+    /**
+     * Set the offset in milliseconds to apply to the cron calculation.
+     * Positive values delay the fire time, negative values advance it.
+     */
+    public void setOffsetMillis(long offsetMillis) {
+        this.offsetMillis = offsetMillis;
+    }
+
+    /**
+     * Returns the offset in milliseconds that this trigger applies to its cron schedule.
+     */
+    public long getOffsetMillis() {
+        return offsetMillis;
     }
 
     public void setCronExpression(String cronExpression) throws ParseException {
@@ -623,7 +640,21 @@ public class CronTriggerImpl extends AbstractTrigger<CronTrigger> implements Cro
     ////////////////////////////////////////////////////////////////////////////
 
     protected Date getTimeAfter(Date afterTime) {
-        return (cronEx == null) ? null : cronEx.getTimeAfter(afterTime);
+        if (cronEx == null) {
+            return null;
+        }
+        if (offsetMillis == 0L) {
+            return cronEx.getTimeAfter(afterTime);
+        }
+
+        Date shiftedAfter = new Date(afterTime.getTime() + offsetMillis);
+
+        Date cronTime = cronEx.getTimeAfter(shiftedAfter);
+        if (cronTime == null) {
+            return null;
+        }
+
+        return new Date(cronTime.getTime() - offsetMillis);
     }
 
     /**

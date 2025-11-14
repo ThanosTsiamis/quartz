@@ -64,6 +64,7 @@ public class CronScheduleBuilder extends ScheduleBuilder<CronTrigger> {
 
     private final CronExpression cronExpression;
     private int misfireInstruction = CronTrigger.MISFIRE_INSTRUCTION_SMART_POLICY;
+    private long offsetMillis = 0L;
 
     protected CronScheduleBuilder(CronExpression cronExpression) {
         if (cronExpression == null) {
@@ -87,7 +88,7 @@ public class CronScheduleBuilder extends ScheduleBuilder<CronTrigger> {
         ct.setCronExpression(cronExpression);
         ct.setTimeZone(cronExpression.getTimeZone());
         ct.setMisfireInstruction(misfireInstruction);
-
+        ct.setOffsetMillis(offsetMillis);
         return ct;
     }
 
@@ -324,6 +325,15 @@ public class CronScheduleBuilder extends ScheduleBuilder<CronTrigger> {
      */
     public CronScheduleBuilder withMisfireHandlingInstructionFireAndProceed() {
         misfireInstruction = CronTrigger.MISFIRE_INSTRUCTION_FIRE_ONCE_NOW;
+        return this;
+    }
+
+    /**
+     * Apply an offset, in milliseconds, to the cron schedule.
+     * Positive values delay the trigger, negative values advance it.
+     */
+    public CronScheduleBuilder withOffsetMillis(long offsetMillis) {
+        this.offsetMillis = offsetMillis;
         return this;
     }
 }
